@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image to Desmos Converter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎨 Image to Desmos Converter</h1>
+            <p>Convert your images into Desmos polynomial equations</p>
+        </header>
+
+        <div class="upload-section">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="file-input-wrapper" id="dropZone">
+                    <input type="file" id="imageInput" name="image" accept="image/*" required>
+                    <label for="imageInput" class="file-label">
+                        <span id="fileName">Drag & drop an image here or click to choose...</span>
+                    </label>
+                </div>
+
+                <div class="parameters">
+                    <h3>Parameters (Optional)</h3>
+                    <p class="params-description">Adjust these settings to fine-tune your conversion</p>
+                    
+                    <div class="param-grid">
+                        <div class="param-group">
+                            <label for="rotation">Rotation (degrees):
+                                <span class="tooltip">ℹ️
+                                    <span class="tooltiptext">Rotate your image before processing. Use if your image is sideways or upside down.</span>
+                                </span>
+                            </label>
+                            <input type="number" id="rotation" name="rotation" value="0" step="1" min="-360" max="360">
+                        </div>
+
+                        <div class="param-group">
+                            <label for="segment_size">Polynomial Degree:
+                                <span class="tooltip">ℹ️
+                                    <span class="tooltiptext">Higher = smoother curves but more complex. Lower = simpler but less accurate. Try 5-7 for most images.</span>
+                                </span>
+                            </label>
+                            <input type="number" id="segment_size" name="segment_size" value="5" step="1" min="3" max="10">
+                        </div>
+
+                        <div class="param-group">
+                            <label for="low_threshold">Edge Low Threshold:
+                                <span class="tooltip">ℹ️
+                                    <span class="tooltiptext">Minimum brightness change to detect an edge. Lower = more details captured. Try 20-40.</span>
+                                </span>
+                            </label>
+                            <input type="number" id="low_threshold" name="low_threshold" value="30" step="5" min="0" max="200">
+                        </div>
+
+                        <div class="param-group">
+                            <label for="high_threshold">Edge High Threshold:
+                                <span class="tooltip">ℹ️
+                                    <span class="tooltiptext">Maximum brightness change for edges. Higher = only strong edges. Lower = more edges detected. Try 80-120.</span>
+                                </span>
+                            </label>
+                            <input type="number" id="high_threshold" name="high_threshold" value="100" step="5" min="0" max="300">
+                        </div>
+
+                        <div class="param-group">
+                            <label for="epsilon_factor">Simplification Factor:
+                                <span class="tooltip">ℹ️
+                                    <span class="tooltiptext">How much to simplify curves. Higher = fewer points, faster but less detailed. Lower = more accurate. Try 0.0001-0.001.</span>
+                                </span>
+                            </label>
+                            <input type="number" id="epsilon_factor" name="epsilon_factor" value="0.0001" step="0.0001" min="0.0001" max="0.01">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="convert-btn" id="convertBtn">
+                    <span id="btnText">Convert to Desmos</span>
+                    <span id="spinner" class="spinner hidden"></span>
+                </button>
+            </form>
+        </div>
+
+        <div id="results" class="results-section hidden">
+            <h2>✅ Conversion Complete!</h2>
+            <p id="statsMessage" class="success-message"></p>
+            
+            <div class="output-image">
+                <h3>Output Image</h3>
+                <img id="outputImage" src="" alt="Converted image">
+                <a id="downloadImage" href="" download class="download-btn">Download Image</a>
+            </div>
+
+            <div class="console-output">
+                <h3>Desmos Console Input</h3>
+                <p class="instructions">
+                    1. Go to <a href="https://www.desmos.com/calculator" target="_blank">Desmos Calculator</a><br>
+                    2. Open browser console (F12 or Ctrl+Shift+I)<br>
+                    3. Copy the code below and paste into console<br>
+                    4. Press Enter to see your image!
+                </p>
+                <div class="code-container">
+                    <button class="copy-btn" onclick="copyToClipboard()">Copy to Clipboard</button>
+                    <pre id="consoleCode"></pre>
+                </div>
+            </div>
+
+            <div class="download-files">
+                <h3>Download Files</h3>
+                <a id="downloadDesmos" href="" download class="download-btn">Download Desmos Equations</a>
+                <a id="downloadConsole" href="" download class="download-btn">Download Console Script</a>
+            </div>
+        </div>
+
+        <div id="error" class="error-message hidden"></div>
+        
+        <div id="loading" class="loading-overlay hidden">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <h3>Processing Your Image...</h3>
+                <p id="loadingStatus">Analyzing edges and contours...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const imageInput = document.getElementById('imageInput');
+        const fileName = document.getElementById('fileName');
+        const convertBtn = document.getElementById('convertBtn');
+        const btnText = document.getElementById('btnText');
+        const spinner = document.getElementById('spinner');
+        const results = document.getElementById('results');
+        const error = document.getElementById('error');
+        const dropZone = document.getElementById('dropZone');
+
+        // Update file name display
+        imageInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                fileName.textContent = e.target.files[0].name;
+            }
+        });
+
+        // Drag and Drop functionality
+        dropZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove('drag-over');
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                
+                // Check if it's an image
+                if (file.type.startsWith('image/')) {
+                    // Create a new FileList-like object
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    imageInput.files = dataTransfer.files;
+                    
+                    // Update the file name display
+                    fileName.textContent = file.name;
+                } else {
+                    alert('Please drop an image file (PNG, JPG, GIF, etc.)');
+                }
+            }
+        });
+
+        // Handle form submission
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Show loading overlay
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('loadingStatus').textContent = 'Uploading image...';
+            
+            // Hide previous results and errors
+            results.classList.add('hidden');
+            error.classList.add('hidden');
+
+            const formData = new FormData(form);
+
+            try {
+                document.getElementById('loadingStatus').textContent = 'Processing image with edge detection...';
+                
+                const response = await fetch('/convert', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                document.getElementById('loadingStatus').textContent = 'Generating polynomial equations...';
+
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // Display results
+                document.getElementById('statsMessage').textContent = data.message || 'Conversion complete!';
+                document.getElementById('outputImage').src = data.output_image;
+                document.getElementById('downloadImage').href = data.output_image;
+                document.getElementById('consoleCode').textContent = data.console_input;
+                document.getElementById('downloadDesmos').href = data.desmos_file;
+                document.getElementById('downloadConsole').href = data.console_file;
+                
+                // Hide loading and show results
+                document.getElementById('loading').classList.add('hidden');
+                results.classList.remove('hidden');
+                
+                // Scroll to results
+                results.scrollIntoView({ behavior: 'smooth' });
+
+            } catch (err) {
+                document.getElementById('loading').classList.add('hidden');
+                error.textContent = 'Error: ' + err.message;
+                error.classList.remove('hidden');
+            }
+        });
+
+        function copyToClipboard() {
+            const code = document.getElementById('consoleCode').textContent;
+            navigator.clipboard.writeText(code).then(function() {
+                const btn = document.querySelector('.copy-btn');
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 from scipy.interpolate import splprep, splev, lagrange
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 from pathlib import Path
 import json
@@ -402,7 +404,7 @@ class ImageToDesmosConverter:
         ax.set_xlim(0, width)
         ax.set_ylim(0, height)
         ax.set_aspect('equal')
-        ax.invert_yaxis()
+        # Don't invert Y-axis - coordinates are already flipped in fit_curves_parametric
         ax.axis('off')
         
         # Plot all curves
