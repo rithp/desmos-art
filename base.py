@@ -392,7 +392,7 @@ class ImageToDesmosConverter:
         with open(filename, 'w') as f:
             f.write('\n'.join(svg_lines))
         
-        print(f"✓ Exported SVG to {filename}")
+        print(f"Exported SVG to {filename}")
         return self
     
     def export_to_high_res_png(self, filename="output.png", dpi=300):
@@ -444,7 +444,7 @@ class ImageToDesmosConverter:
         
         plt.tight_layout()
         plt.savefig("processing_steps.png", dpi=150, bbox_inches='tight')
-        print(f"✓ Saved visualization")
+        print(f"Saved visualization")
         plt.close()
         return self
     
@@ -474,22 +474,7 @@ class ImageToDesmosConverter:
         
         self.visualize()
         
-        print("=" * 50)
-        print(f"✅ DONE!")
-        print(f"  - Desmos equations: {output_file}")
-        if export_desmos_state:
-            print(f"  - Desmos graph state: desmos_state.json")
-            print(f"    → Go to: https://www.desmos.com/calculator")
-            print(f"    → Click the menu (☰) → 'Import from...' → Upload desmos_state.json")
-        print(f"  - Desmos console input: desmos_console_input.txt")
-        print(f"    → Go to: https://www.desmos.com/calculator")
-        print(f"    → Open developer console (F12 or Ctrl+Shift+I)")
-        print(f"    → Copy content from desmos_console_input.txt and paste into console")
-        if export_svg:
-            print(f"  - SVG (vector): output.svg")
-        if export_png:
-            print(f"  - PNG (high-res): output.png")
-        print("=" * 50)
+        
         return self
 
 
