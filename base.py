@@ -32,9 +32,9 @@ class ImageToDesmosConverter:
         if manual_rotation != 0:
             self.gray = self._rotate_image(self.gray, manual_rotation)
             self.image = self._rotate_image(self.image, manual_rotation)
-            print(f"✓ Rotated {manual_rotation:.1f}°")
+            print(f" Rotated {manual_rotation:.1f}°")
         
-        print(f"✓ Loaded {self.gray.shape[1]}×{self.gray.shape[0]} image")
+        print(f"Loaded {self.gray.shape[1]}×{self.gray.shape[0]} image")
         return self
     
     def _rotate_image(self, img, angle):
