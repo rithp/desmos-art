@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: desmos-art-converter
+    env: python
+    buildCommand: pip install -r requirements-production.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.6
+      - key: DEBUG
+        value: false
