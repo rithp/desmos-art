@@ -35,7 +35,6 @@ processing_steps.png
 test_*.py
 
 # Images (except example)
-*.png
 *.jpg
 *.jpeg
 *.gif

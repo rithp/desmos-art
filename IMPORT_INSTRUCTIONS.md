@@ -1,6 +1,6 @@
 # How to Import Your Image into Desmos
 
-## ✅ RECOMMENDED METHOD: Import JSON File
+##  RECOMMENDED METHOD: Import JSON File
 
 Your image has been converted to **3,354 parametric polynomial equations** and saved in `desmos_state.json`.
 
@@ -24,7 +24,7 @@ Your image has been converted to **3,354 parametric polynomial equations** and s
 
 ---
 
-## 📊 What's Included
+##  What's Included
 
 - **desmos_state.json** - Complete Desmos graph state with all 3,354 parametric curves
 - **desmos_output.txt** - Individual equations (if you want to copy-paste specific curves)
@@ -34,7 +34,7 @@ Your image has been converted to **3,354 parametric polynomial equations** and s
 
 ---
 
-## ⚠️ Important Notes
+##  Important Notes
 
 - **All 3,354 equations are preserved** - No reduction was made
 - The equations are in parametric form: (x(t), y(t)) where t ranges from 0 to 1
@@ -46,7 +46,7 @@ Your image has been converted to **3,354 parametric polynomial equations** and s
 
 ---
 
-## 🎨 Alternative Uses
+##  Alternative Uses
 
 If you don't need Desmos specifically:
 
@@ -56,7 +56,7 @@ If you don't need Desmos specifically:
 
 ---
 
-## 🔧 Technical Details
+##  Technical Details
 
 - Total polynomial segments: 3,354
 - File size: 1.2 MB (JSON)
@@ -64,4 +64,4 @@ If you don't need Desmos specifically:
 - Parameter domain: [0, 1] for each segment
 - Format: LaTeX notation for Desmos compatibility
 
-Enjoy your mathematical artwork! 🎉
+Enjoy your mathematical artwork! 

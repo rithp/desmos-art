@@ -2,9 +2,27 @@
 
 Convert manga panels, anime characters, and other images into Desmos graphing calculator equations!
 
-> 📚 **For detailed algorithm explanation, mathematical theory, and references, see [ALGORITHM_EXPLANATION.md](ALGORITHM_EXPLANATION.md)**
+>  **For detailed algorithm explanation, mathematical theory, and references, see [ALGORITHM_EXPLANATION.md](ALGORITHM_EXPLANATION.md)**
 
-## 🚀 Quick Start
+
+## sample outputs
+<div style="display: flex; gap: 10px;">
+  <img src="image-1.png" alt="Sample Output 1" width="49%">
+  <img src="image-2.png" alt="Sample Output 2" width="49%">
+</div>
+
+<div style="display: flex; gap: 10px;">
+  <img src="image-3.png" alt="Sample Output 3" width="49%">
+  <img src="image-4.png" alt="Sample Output 4" width="49%">
+</div>
+
+<div style="display: flex; gap: 10px;">
+  <img src="image-5.png" alt="Sample Output 5" width="49%">
+  <img src="image-6.png" alt="Sample Output 6" width="49%">
+</div>
+
+
+##  Quick Start
 
 ### 1. Activate the virtual environment
 ```bash
@@ -16,7 +34,7 @@ source venv/bin/activate
 python base.py
 ```
 
-## 📖 How to Use
+##  How to Use
 
 ### Basic Usage
 
@@ -60,7 +78,7 @@ converter.export_to_desmos_file("my_output.txt", max_curves=50)
 converter.visualize()
 ```
 
-## 🎛️ Parameter Guide
+##  Parameter Guide
 
 ### Edge Detection
 - **`canny_low`** (30-100): Lower threshold - lower values detect more edges
@@ -81,13 +99,13 @@ converter.visualize()
 ### Export
 - **`max_curves`** (10-100): Maximum curves to export to Desmos
 
-## 💡 Tips for Best Results
+##  Tips for Best Results
 
 ### For Manga/Anime:
-- ✅ Use **high-contrast** images
-- ✅ **Clean line art** works best
-- ✅ **Black & white** or simplified color schemes
-- ✅ Start with **simpler characters** or **single panels**
+-  Use **high-contrast** images
+-  **Clean line art** works best
+- **Black & white** or simplified color schemes
+-  Start with **simpler characters** or **single panels**
 
 ### Image Preparation:
 1. **Crop** to focus on the subject
@@ -100,7 +118,7 @@ converter.visualize()
 - **Missing details?** → Decrease `epsilon_factor` or adjust Canny thresholds
 - **Jagged curves?** → Increase `smoothing_factor` or `num_points`
 
-## 📊 What Gets Generated
+##  What Gets Generated
 
 The script produces:
 
@@ -135,7 +153,7 @@ polygon((100,200) (105,205) (110,210) ...)
 - Adjust `smoothing_factor`
 - Try inverting the image (white lines on black)
 
-## 🎯 Example Workflows
+##  Example Workflows
 
 ### Simple Character Outline
 ```python
@@ -157,7 +175,7 @@ converter.fit_curves(num_points=150)
 converter.export_to_desmos_file(max_curves=100)
 ```
 
-## 📦 Dependencies
+##  Dependencies
 
 - `opencv-python`: Image processing and edge detection
 - `numpy`: Numerical operations
@@ -174,14 +192,14 @@ All installed in your virtual environment!
 4. **Curve Fitting**: B-spline interpolation creates smooth parametric curves OR raw points for maximum accuracy
 5. **Export**: Converts to Desmos polygon format
 
-> 📖 **Want to understand the math and theory?** Read the [detailed algorithm explanation](ALGORITHM_EXPLANATION.md) which covers:
+>  **Want to understand the math and theory?** Read the [detailed algorithm explanation](ALGORITHM_EXPLANATION.md) which covers:
 > - Mathematical foundations (Canny edge detection, B-splines, Douglas-Peucker)
 > - Complexity analysis and performance characteristics
 > - Comparison with Fourier transform approaches
 > - Limitations and theoretical drawbacks
 > - Academic references and citations
 
-## 📝 Notes
+##  Notes
 
 - Desmos has a limit on complexity - simpler is often better
 - You may need to adjust colors/styling in Desmos after import
@@ -190,4 +208,9 @@ All installed in your virtual environment!
 
 ---
 
-**Made for converting manga panels and anime characters to mathematical art! 🎨✨**
+
+## Failures
+
+![alt text](image-7.png)
+
+![alt text](image-8.png)
