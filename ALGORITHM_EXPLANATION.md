@@ -5,6 +5,23 @@
 This tool converts 2D images (particularly manga panels and anime characters) into mathematical equations that can be rendered in the Desmos graphing calculator. The approach uses **edge detection** followed by **contour extraction** to represent images as sets of parametric curves.
 
 ---
+## sample outputs
+<div style="display: flex; gap: 10px;">
+  <img src="image-1.png" alt="Sample Output 1" width="49%">
+  <img src="image-2.png" alt="Sample Output 2" width="49%">
+</div>
+
+<div style="display: flex; gap: 10px;">
+  <img src="image-3.png" alt="Sample Output 3" width="49%">
+  <img src="image-4.png" alt="Sample Output 4" width="49%">
+</div>
+
+<div style="display: flex; gap: 10px;">
+  <img src="image-5.png" alt="Sample Output 5" width="49%">
+  <img src="image-6.png" alt="Sample Output 6" width="49%">
+</div>
+
+
 
 ## Algorithm Pipeline
 
@@ -51,9 +68,10 @@ Gx = [[-1, 0, 1],      Gy = [[-1, -2, -1],
 Magnitude: |G| = √(Gx² + Gy²)
 Direction: θ = arctan(Gy/Gx)
 ```
+essentially Gx finds the intensity contrast in x dirn and Gy in y dirn, from this we get well defined edges.
 
 #### c) Non-Maximum Suppression
-Thin edges to 1-pixel width by suppressing non-maximum gradient values along the gradient direction.
+edges produced are usually reall thick, due to the fact that itensity varies over a few rows and columns of pixels, this reduces the thickness and gives thin well defined lines.
 
 #### d) Double Threshold (Hysteresis)
 Uses two thresholds (low and high):
@@ -70,6 +88,7 @@ canny_high = 150  # Upper threshold
 **Reference:**
 - Canny, J. (1986). "A Computational Approach to Edge Detection." IEEE Trans. Pattern Analysis and Machine Intelligence, 8(6):679-698.
 - DOI: 10.1109/TPAMI.1986.4767851
+- Computerphile has amazing videos on these topics.
 
 ---
 
@@ -88,6 +107,7 @@ C = {(x₁,y₁), (x₂,y₂), ..., (xₙ,yₙ)}
 **Optimization:** `CHAIN_APPROX_SIMPLE` removes redundant points:
 - Stores only endpoints of horizontal, vertical, and diagonal segments
 - Reduces point count by ~50-70% without losing shape information
+
 
 **Example:**
 ```
@@ -163,7 +183,7 @@ Where h is the image height.
 
 ### 6. **Curve Representation**
 
-#### **Mode 1: Raw Points (High Accuracy)** ⭐ Recommended for Manga
+
 
 **Method:** Use edge pixels directly without interpolation.
 
@@ -173,14 +193,14 @@ Points: {(x₁,y₁), (x₂,y₂), ..., (xₙ,yₙ)}
 ```
 
 **Advantages:**
-- ✅ Perfect fidelity to detected edges
-- ✅ Preserves sharp corners and fine details
-- ✅ No mathematical approximation error
+-  Perfect fidelity to detected edges
+-  Preserves sharp corners and fine details
+-  No mathematical approximation error
 
 **Disadvantages:**
-- ❌ Large number of points (typically 100-300 per curve)
-- ❌ May include staircase artifacts from pixelation
-- ❌ Slower rendering in Desmos
+-  Large number of points (typically 100-300 per curve)
+-  May include staircase artifacts from pixelation
+-  Slower rendering in Desmos
 
 **Best For:** Manga, anime, technical drawings, architecture
 
@@ -232,16 +252,16 @@ E = Σᵢ (d(Pᵢ, C(uᵢ)))² + s × ∫ |C''(u)|² du
 - Second term: curvature penalty (weighted by s)
 
 **Advantages:**
-- ✅ Smooth, continuous curves
-- ✅ Fewer points needed (50-500 per curve)
-- ✅ Better for organic/rounded shapes
-- ✅ Removes pixelation artifacts
+- Smooth, continuous curves
+-  Fewer points needed (50-500 per curve)
+-  Better for organic/rounded shapes
+-  Removes pixelation artifacts
 
 **Disadvantages:**
-- ❌ Loss of sharp corners and fine details
-- ❌ Approximation introduces error
-- ❌ Poor for angular/geometric shapes
-- ❌ Can create unwanted oscillations (Runge's phenomenon)
+-  Loss of sharp corners and fine details
+-  Approximation introduces error
+-  Poor for angular/geometric shapes
+-  Can create unwanted oscillations (Runge's phenomenon)
 
 **Best For:** Organic shapes, portraits, rounded objects
 
@@ -264,9 +284,9 @@ E = Σᵢ (d(Pᵢ, C(uᵢ)))² + s × ∫ |C''(u)|² du
 - Supports both open curves and closed polygons
 
 **Alternative Formats** (not used):
-- ❌ Parametric equations: `(x(t), y(t))` - Limited to simple functions
-- ❌ Implicit equations: `f(x,y) = 0` - Hard to fit to arbitrary curves
-- ❌ Polynomial fit: `y = p(x)` - Fails for vertical lines and multi-valued functions
+- Parametric equations: `(x(t), y(t))` - Limited to simple functions
+-  Implicit equations: `f(x,y) = 0` - Hard to fit to arbitrary curves
+-  Polynomial fit: `y = p(x)` - Fails for vertical lines and multi-valued functions
 
 ---
 
@@ -328,124 +348,14 @@ E = Σᵢ (d(Pᵢ, C(uᵢ)))² + s × ∫ |C''(u)|² du
 
 ---
 
-## Comparison: Fourier Transform vs Edge Detection
 
-### **Fourier Transform Method** (Alternative approach)
 
-**Algorithm:**
-1. Extract outline as complex path: `z(t) = x(t) + iy(t)`
-2. Compute Discrete Fourier Transform:
-   ```
-   Z[k] = Σₙ₌₀ᴺ⁻¹ z[n] e^(-i2πkn/N)
-   ```
-3. Represent as epicycles (rotating circles):
-   ```
-   z(t) = Σₖ₌₋ₙⁿ Zₖ e^(i2πkt)
-   ```
 
-**Pros:**
-- ✅ Creates smooth, artistic animations
-- ✅ Frequency-based representation
-- ✅ Good for single closed curves
-
-**Cons:**
-- ❌ Only works for single continuous closed curves
-- ❌ Requires many terms for sharp corners (Gibbs phenomenon)
-- ❌ Cannot handle multiple disconnected shapes
-- ❌ Oscillations near discontinuities
-
-**Reference:**
-- "Drawing with Fourier Epicycles" - 3Blue1Brown
-- Cooley, J. W., & Tukey, J. W. (1965). "An algorithm for the machine calculation of complex Fourier series." Math. Comput. 19(90), 297-301.
-
-### **Why Edge Detection is Better for Manga:**
-
-| Aspect | Edge Detection | Fourier Transform |
-|--------|---------------|-------------------|
-| Multiple objects | ✅ Handles naturally | ❌ Needs one curve per object |
-| Sharp corners | ✅ Preserves perfectly | ❌ Gibbs oscillations |
-| Discontinuities | ✅ No problem | ❌ Poor approximation |
-| Implementation | ✅ Straightforward | ⚠️ Complex preprocessing |
-| Desmos compatibility | ✅ Direct output | ⚠️ Needs many terms |
-
----
 
 ## Limitations and Drawbacks
 
-### 1. **Edge Detection Sensitivity**
-- **Problem:** Canny parameters must be tuned per image
-- **Impact:** Wrong thresholds → missed edges or excessive noise
-- **Solution:** Adaptive thresholding (Otsu's method) - not yet implemented
-
-### 2. **Multiple Curves in Desmos**
-- **Problem:** Complex images → 50+ curves → slow rendering
-- **Impact:** Desmos may lag with >1000 total points
-- **Solution:** Increase simplification or limit max_curves
-
-### 3. **Loss of Texture**
-- **Problem:** Edge detection only captures boundaries
-- **Impact:** Shading, gradients, and textures are lost
-- **Solution:** Would need region-based representation (beyond scope)
-
-### 4. **Staircase Artifacts**
-- **Problem:** Pixel discretization creates jagged edges
-- **Impact:** Diagonal lines appear stepped in raw mode
-- **Solution:** Sub-pixel edge detection (computationally expensive)
-
-### 5. **Self-Intersections**
-- **Problem:** Contour ordering may create visual artifacts
-- **Impact:** Desmos connects points in sequence, may cross unexpectedly
-- **Solution:** Topology-aware curve ordering (complex)
-
-### 6. **Coordinate Precision**
-- **Problem:** Desmos rounds to 2 decimal places by default
-- **Impact:** Fine details may be lost
-- **Solution:** Already using `precision=2` parameter
-
-### 7. **No Semantic Understanding**
-- **Problem:** Algorithm doesn't understand image content
-- **Impact:** Important features treated same as background noise
-- **Solution:** Would require deep learning (semantic segmentation)
-
----
-
-## Theoretical Foundations
-
-### Computer Vision Concepts
-
-1. **Edge Detection Theory**
-   - Edges = regions of high intensity gradient
-   - First derivative maximum ≈ second derivative zero-crossing
-   - Scale-space theory: edges exist at multiple scales
-
-2. **Contour Following**
-   - Topological graph representation
-   - 4-connectivity vs 8-connectivity
-   - Outer vs inner contours (hierarchy)
-
-### Computational Geometry
-
-1. **Curve Simplification**
-   - Optimal solution: NP-hard
-   - Douglas-Peucker: greedy approximation
-   - Preservation of topology
-
-2. **Parametric Curves**
-   - Explicit vs implicit vs parametric representations
-   - Continuity: C⁰ (continuous) → C¹ (smooth) → C² (no kinks)
-   - Convex hull property of B-splines
-
-### Numerical Analysis
-
-1. **Spline Interpolation**
-   - Piecewise polynomial approximation
-   - Minimizing curvature (energy)
-   - Knot placement strategies
-
-2. **Approximation Error**
-   - L² norm: ∫(f(x) - g(x))² dx
-   - L∞ norm: max|f(x) - g(x)|
-   - Convergence rates
+1. Fails in high contrast images like movie posters, model pictures, etc.
+2. fails in manga panels with high shading and detailing
 
 ---
 
@@ -489,6 +399,10 @@ E = Σᵢ (d(Pᵢ, C(uᵢ)))² + s × ∫ |C''(u)|² du
 
 ## Future Improvements
 
+1. maybeee try adding a feature that lets us set threshold for a part of the image according to our choosing.
+2. try to look for methods for 3d detection with high contrast (3d for normal photos like stock images works fine)
+3. try llm features like visual transofrmers to produces good edges which take care of semantic interpretation.
+
 ### Algorithmic Enhancements
 
 1. **Adaptive Thresholding**
@@ -527,24 +441,17 @@ E = Σᵢ (d(Pᵢ, C(uᵢ)))² + s × ∫ |C''(u)|² du
    - Parallel contour processing
    - GPU-accelerated edge detection
 
-2. **Progressive Rendering**
-   - Export curves by importance
-   - Allow preview before full export
+
 
 ---
 
-## Conclusion
+## Failures
 
-This tool uses a **classical computer vision pipeline** combining well-established algorithms:
-- **Canny edge detection** for robust boundary extraction
-- **Douglas-Peucker simplification** for data reduction
-- **Raw points or B-spline fitting** for curve representation
+![alt text](image-7.png)
 
-The approach is **deterministic, explainable, and theoretically grounded** in decades of research in image processing and computational geometry. While it has limitations (no texture, sensitivity to parameters, Desmos performance), it provides an effective solution for converting line art to mathematical representations.
-
-For manga and anime specifically, **raw point mode with minimal simplification** provides the best accuracy at the cost of computational performance in Desmos.
+![alt text](image-8.png)
 
 ---
 
-**Last Updated:** November 2, 2025  
+**Last Updated:** Jan 14, 2026
 **Version:** 1.0

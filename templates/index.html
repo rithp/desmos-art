@@ -71,6 +71,35 @@
                             </label>
                             <input type="number" id="epsilon_factor" name="epsilon_factor" value="0.0001" step="0.0001" min="0.0001" max="0.01">
                         </div>
+
+                        <div class="param-group">
+                            <label for="min_contour_area">Min Contour Area:
+                                <span class="tooltip">ℹ️
+                                    <span class="tooltiptext">Minimum contour size to keep. Lower = more details (including noise). Higher = only large shapes. Try 5-20.</span>
+                                </span>
+                            </label>
+                            <input type="number" id="min_contour_area" name="min_contour_area" value="20" step="1" min="1" max="100">
+                        </div>
+
+                        <div class="param-group">
+                            <label for="blur_size">Blur Size:
+                                <span class="tooltip">ℹ️
+                                    <span class="tooltiptext">Gaussian blur before edge detection. Lower = preserve details. Higher = smooth noise. Odd numbers only (1, 3, 5, 7).</span>
+                                </span>
+                            </label>
+                            <input type="number" id="blur_size" name="blur_size" value="3" step="2" min="1" max="9">
+                        </div>
+                    </div>
+
+                    <div class="mode-selector">
+                        <label class="mode-option">
+                            <input type="radio" name="mode" value="full" checked>
+                            <span>Full Conversion (with Desmos equations)</span>
+                        </label>
+                        <label class="mode-option">
+                            <input type="radio" name="mode" value="preview">
+                            <span>Preview Contours Only (faster, no equations)</span>
+                        </label>
                     </div>
                 </div>
 
@@ -82,16 +111,16 @@
         </div>
 
         <div id="results" class="results-section hidden">
-            <h2>✅ Conversion Complete!</h2>
+            <h2>✅ <span id="resultsTitle">Conversion Complete!</span></h2>
             <p id="statsMessage" class="success-message"></p>
             
             <div class="output-image">
-                <h3>Output Image</h3>
+                <h3 id="outputTitle">Output Image</h3>
                 <img id="outputImage" src="" alt="Converted image">
                 <a id="downloadImage" href="" download class="download-btn">Download Image</a>
             </div>
 
-            <div class="console-output">
+            <div class="console-output" id="consoleOutputSection">
                 <h3>Desmos Console Input</h3>
                 <p class="instructions">
                     1. Go to <a href="https://www.desmos.com/calculator" target="_blank">Desmos Calculator</a><br>
@@ -191,16 +220,26 @@
             error.classList.add('hidden');
 
             const formData = new FormData(form);
+            
+            // Add contours_only flag based on mode selection
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+            formData.append('contours_only', mode === 'preview' ? 'true' : 'false');
 
             try {
-                document.getElementById('loadingStatus').textContent = 'Processing image with edge detection...';
+                if (mode === 'preview') {
+                    document.getElementById('loadingStatus').textContent = 'Detecting edges and contours...';
+                } else {
+                    document.getElementById('loadingStatus').textContent = 'Processing image with edge detection...';
+                }
                 
                 const response = await fetch('/convert', {
                     method: 'POST',
                     body: formData
                 });
 
-                document.getElementById('loadingStatus').textContent = 'Generating polynomial equations...';
+                if (mode === 'full') {
+                    document.getElementById('loadingStatus').textContent = 'Generating polynomial equations...';
+                }
 
                 const data = await response.json();
 
@@ -212,9 +251,23 @@
                 document.getElementById('statsMessage').textContent = data.message || 'Conversion complete!';
                 document.getElementById('outputImage').src = data.output_image;
                 document.getElementById('downloadImage').href = data.output_image;
-                document.getElementById('consoleCode').textContent = data.console_input;
-                document.getElementById('downloadDesmos').href = data.desmos_file;
-                document.getElementById('downloadConsole').href = data.console_file;
+                
+                if (data.contours_only) {
+                    // Preview mode - hide Desmos sections
+                    document.getElementById('resultsTitle').textContent = 'Preview Complete!';
+                    document.getElementById('outputTitle').textContent = 'Detected Contours';
+                    document.getElementById('consoleOutputSection').classList.add('hidden');
+                    document.querySelector('.download-files').classList.add('hidden');
+                } else {
+                    // Full mode - show all sections
+                    document.getElementById('resultsTitle').textContent = 'Conversion Complete!';
+                    document.getElementById('outputTitle').textContent = 'Output Image';
+                    document.getElementById('consoleOutputSection').classList.remove('hidden');
+                    document.querySelector('.download-files').classList.remove('hidden');
+                    document.getElementById('consoleCode').textContent = data.console_input;
+                    document.getElementById('downloadDesmos').href = data.desmos_file;
+                    document.getElementById('downloadConsole').href = data.console_file;
+                }
                 
                 // Hide loading and show results
                 document.getElementById('loading').classList.add('hidden');

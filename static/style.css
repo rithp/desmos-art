@@ -179,6 +179,49 @@ header p {
     border-color: #667eea;
 }
 
+.mode-selector {
+    margin-top: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 2px solid #dee2e6;
+}
+
+.mode-option {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    border-radius: 8px;
+    background: white;
+    border: 2px solid #dee2e6;
+    transition: all 0.3s;
+}
+
+.mode-option:hover {
+    border-color: #667eea;
+    background: #f0f4ff;
+}
+
+.mode-option input[type="radio"] {
+    margin-right: 10px;
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+}
+
+.mode-option span {
+    font-size: 1em;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.mode-option input[type="radio"]:checked + span {
+    color: #667eea;
+    font-weight: 600;
+}
+
 .checkbox-group {
     grid-column: 1 / -1;
 }

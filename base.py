@@ -16,12 +16,24 @@ class ImageToDesmosConverter:
         self.edges = None
         self.contours = []
         self.equations = []
-        self.output_dir = Path(".")
+        self.output_dir = Path("outputs")
+        self.base_name = None
     
     def load_and_preprocess(self, auto_rotate=True, manual_rotation=0, enhance_contrast=True):
         self.image = cv2.imread(str(self.image_path))
         if self.image is None:
             raise ValueError(f"Could not load image from {self.image_path}")
+        
+        # Extract base name from input image path
+        self.base_name = Path(self.image_path).stem
+        
+        # Create outputs directory if it doesn't exist
+        self.output_dir.mkdir(exist_ok=True)
+        
+        # Save original input image to outputs folder
+        input_copy_path = self.output_dir / f"{self.base_name}_input.png"
+        cv2.imwrite(str(input_copy_path), self.image)
+        print(f"✓ Saved input image to {input_copy_path}")
         
         self.gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
         
@@ -32,9 +44,9 @@ class ImageToDesmosConverter:
         if manual_rotation != 0:
             self.gray = self._rotate_image(self.gray, manual_rotation)
             self.image = self._rotate_image(self.image, manual_rotation)
-            print(f" Rotated {manual_rotation:.1f}°")
+            print(f"✓ Rotated {manual_rotation:.1f}°")
         
-        print(f"Loaded {self.gray.shape[1]}×{self.gray.shape[0]} image")
+        print(f"✓ Loaded {self.gray.shape[1]}×{self.gray.shape[0]} image")
         return self
     
     def _rotate_image(self, img, angle):
@@ -55,7 +67,7 @@ class ImageToDesmosConverter:
         contours, _ = cv2.findContours(self.edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
         self.contours = [c for c in contours if cv2.contourArea(c) > min_contour_area]
         
-        print(f"✓ Found {len(self.contours)} contours")
+        print(f"Found {len(self.contours)} contours")
         return self
     
     def simplify_contours(self, epsilon_factor=0.0001):
@@ -67,7 +79,7 @@ class ImageToDesmosConverter:
         
         self.contours = simplified
         new_total = sum(len(c) for c in self.contours)
-        print(f"✓ Simplified to {new_total} points")
+        print(f"Simplified to {new_total} points")
         return self
     
     def fit_curves_parametric(self, segment_size=5):
@@ -126,10 +138,15 @@ class ImageToDesmosConverter:
             if len(polynomial_segments) > 0:
                 self.equations.append({'segments': polynomial_segments})
         
-        print(f"✓ Generated {len(self.equations)} parametric curves")
+        print(f"Generated {len(self.equations)} parametric curves")
         return self
     
-    def export_to_desmos_file(self, filename="desmos_output.txt"):
+    def export_to_desmos_file(self, filename=None):
+        if filename is None:
+            filename = self.output_dir / f"{self.base_name}_desmos.txt"
+        else:
+            filename = self.output_dir / filename
+            
         with open(filename, 'w') as f:
             f.write("=" * 80 + "\n")
             f.write("DESMOS OUTPUT - Parametric Polynomial Equations\n")
@@ -189,11 +206,16 @@ class ImageToDesmosConverter:
                     
                     curve_num += 1
         
-        print(f"✓ Exported {curve_num-1} polynomial segments to {filename}")
+        print(f"Exported {curve_num-1} polynomial segments to {filename}")
         return self
 
-    def export_for_console(self, filename="desmos_console_input.txt"):
+    def export_for_console(self, filename=None):
         """Exports all expressions into a single command for the Desmos console."""
+        
+        if filename is None:
+            filename = self.output_dir / f"{self.base_name}_console.txt"
+        else:
+            filename = self.output_dir / filename
         
         # Start with a command to clear the calculator
         all_expressions_str = "Calc.setBlank();\n"
@@ -257,7 +279,7 @@ class ImageToDesmosConverter:
         with open(filename, 'w') as f:
             f.write(all_expressions_str)
             
-        print(f"✓ Exported console commands to {filename}")
+        print(f"Exported console commands to {filename}")
         return self
     
     def create_desmos_graph_state(self):
@@ -351,19 +373,29 @@ class ImageToDesmosConverter:
         
         return graph_state
     
-    def export_desmos_graph_state(self, filename="desmos_state.json"):
+    def export_desmos_graph_state(self, filename=None):
         """Export graph state to JSON file that can be imported to Desmos."""
+        if filename is None:
+            filename = self.output_dir / f"{self.base_name}_state.json"
+        else:
+            filename = self.output_dir / filename
+            
         graph_state = self.create_desmos_graph_state()
         
         with open(filename, 'w') as f:
             json.dump(graph_state, f, indent=2)
         
-        print(f"✓ Exported Desmos graph state to {filename}")
+        print(f" Exported Desmos graph state to {filename}")
         print(f"  Total expressions: {len(graph_state['expressions']['list'])}")
         return self
     
-    def export_to_svg(self, filename="output.svg"):
+    def export_to_svg(self, filename=None):
         """Export curves as SVG (vector graphics) file."""
+        if filename is None:
+            filename = self.output_dir / f"{self.base_name}_output.svg"
+        else:
+            filename = self.output_dir / filename
+            
         # Get image dimensions
         height, width = self.image.shape[:2]
         
@@ -392,11 +424,16 @@ class ImageToDesmosConverter:
         with open(filename, 'w') as f:
             f.write('\n'.join(svg_lines))
         
-        print(f"Exported SVG to {filename}")
+        print(f"✓ Exported SVG to {filename}")
         return self
     
-    def export_to_high_res_png(self, filename="output.png", dpi=300):
+    def export_to_high_res_png(self, filename=None, dpi=300):
         """Export curves as high-resolution PNG."""
+        if filename is None:
+            filename = self.output_dir / f"{self.base_name}_output.png"
+        else:
+            filename = self.output_dir / filename
+            
         height, width = self.image.shape[:2]
         
         # Create figure with exact dimensions
@@ -416,11 +453,53 @@ class ImageToDesmosConverter:
                 ax.plot(x_sample, y_sample, 'k-', linewidth=0.5)
         
         plt.savefig(filename, dpi=dpi, bbox_inches='tight', pad_inches=0, facecolor='white')
-        print(f"✓ Exported PNG to {filename}")
+        print(f" Exported PNG to {filename}")
         plt.close()
         return self
     
+    def export_contours_only(self, filename=None, show_original=True):
+        """Export just the detected contours without polynomial fitting."""
+        if filename is None:
+            filename = self.output_dir / f"{self.base_name}_contours_only.png"
+        else:
+            filename = self.output_dir / filename
+        
+        # Create figure
+        fig, axes = plt.subplots(1, 2 if show_original else 1, 
+                                figsize=(16, 8) if show_original else (8, 8))
+        
+        if show_original:
+            # Show original image
+            axes[0].imshow(cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB))
+            axes[0].set_title('Original Image', fontsize=14, fontweight='bold')
+            axes[0].axis('off')
+            
+            contour_ax = axes[1]
+        else:
+            contour_ax = axes
+        
+        # Create white background for contours
+        h, w = self.gray.shape
+        contour_image = np.ones((h, w, 3), dtype=np.uint8) * 255
+        
+        # Draw all contours
+        cv2.drawContours(contour_image, self.contours, -1, (0, 0, 0), 2)
+        
+        contour_ax.imshow(contour_image)
+        contour_ax.set_title(f'Detected Contours ({len(self.contours)} total)', 
+                            fontsize=14, fontweight='bold')
+        contour_ax.axis('off')
+        
+        plt.tight_layout()
+        plt.savefig(filename, dpi=150, bbox_inches='tight', facecolor='white')
+        print(f"Saved contours visualization to {filename}")
+        plt.close()
+        
+        return self
+    
     def visualize(self):
+        filename = self.output_dir / f"{self.base_name}_processing_steps.png"
+        
         fig, axes = plt.subplots(1, 3, figsize=(18, 6))
         
         axes[0].imshow(cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB))
@@ -443,42 +522,81 @@ class ImageToDesmosConverter:
                 axes[2].plot(x_sample, y_sample, 'b-', linewidth=0.5)
         
         plt.tight_layout()
-        plt.savefig("processing_steps.png", dpi=150, bbox_inches='tight')
-        print(f"Saved visualization")
+        plt.savefig(filename, dpi=150, bbox_inches='tight')
+        print(f" Saved visualization to {filename}")
         plt.close()
         return self
     
-    def process(self, output_file="desmos_output.txt", manual_rotation=0, segment_size=5, 
-                export_svg=True, export_png=True, export_desmos_state=True):
+    def process_preview_only(self, manual_rotation=0, low_threshold=30, 
+                            high_threshold=100, epsilon_factor=0.0001,
+                            min_contour_area=20, blur_size=3):
+        """Process image and show only contours without computing Desmos equations."""
         print("\n" + "=" * 50)
-        print("🎨 Parametric Polynomial Converter")
+        print("🔍 Preview Mode - Contours Only")
+        print("=" * 50)
+        
+        self.load_and_preprocess(manual_rotation=manual_rotation)
+        self.detect_edges(low_threshold=low_threshold, high_threshold=high_threshold,
+                         blur_size=blur_size, min_contour_area=min_contour_area)
+        self.simplify_contours(epsilon_factor=epsilon_factor)
+        
+        # Export contours visualization only
+        self.export_contours_only(show_original=True)
+        
+        print(f"✓ Preview complete - check contours image")
+        print(f"  Total contours: {len(self.contours)}")
+        total_points = sum(len(c) for c in self.contours)
+        print(f"  Total points: {total_points}")
+        
+        return self
+    
+    def process(self, output_file=None, manual_rotation=0, segment_size=5, 
+                export_svg=True, export_png=True, export_desmos_state=True,
+                contours_only=False):
+        """
+        Full processing with all exports.
+        
+        Parameters:
+        - contours_only: If True, only export contour visualization without Desmos equations
+        """
+        print("\n" + "=" * 50)
+        if contours_only:
+            print("🔍 Contours Only Mode")
+        else:
+            print("🎨 Parametric Polynomial Converter")
         print("=" * 50)
         
         self.load_and_preprocess(manual_rotation=manual_rotation)
         self.detect_edges()
         self.simplify_contours()
-        self.fit_curves_parametric(segment_size=segment_size)
         
-        # Export in multiple formats
-        self.export_to_desmos_file(output_file)
-        self.export_for_console() # <--- Add this call
-        
-        if export_desmos_state:
-            self.export_desmos_graph_state("desmos_state.json")
-        
-        if export_svg:
-            self.export_to_svg("output.svg")
-        
-        if export_png:
-            self.export_to_high_res_png("output.png", dpi=300)
-        
-        self.visualize()
-        
+        if contours_only:
+            # Only export contours visualization
+            self.export_contours_only(show_original=True)
+            print(f"✓ Contours exported - {len(self.contours)} total contours")
+        else:
+            # Full Desmos processing
+            self.fit_curves_parametric(segment_size=segment_size)
+            
+            # Export in multiple formats
+            self.export_to_desmos_file(output_file)
+            self.export_for_console()
+            
+            if export_desmos_state:
+                self.export_desmos_graph_state()
+            
+            if export_svg:
+                self.export_to_svg()
+            
+            if export_png:
+                self.export_to_high_res_png(dpi=300)
+            
+            self.visualize()
         
         return self
 
 
 if __name__ == "__main__":
-    converter = ImageToDesmosConverter("image.png")
+    converter = ImageToDesmosConverter("image.jpg")
     converter.process(manual_rotation=0, segment_size=5, 
                      export_svg=True, export_png=True, export_desmos_state=True)
