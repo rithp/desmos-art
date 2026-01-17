@@ -75,7 +75,7 @@ Convert manga panels, anime characters, ph## Parameter Guide
 - **`canny_high`** (100-200): Upper threshold - higher values are more selective
 - **`min_contour_area`** (10-100): Minimum contour size to keepand movie posters into Desmos graphing calculator equations.
 
-For detailed algorithm explanation, mathematical theory, and references, see [ALGORITHM_EXPLANATION.md](ALGORITHM_EXPLANATION.md)
+For detailed algorithm explanation, mathematical theory,sample outputs and references, see [ALGORITHM_EXPLANATION.md](ALGORITHM_EXPLANATION.md)
 
 ## What's New in Version 2.0
 
@@ -134,18 +134,18 @@ For mathematical formulations and detailed explanations of these algorithms, see
 
 ## sample outputs
 <div style="display: flex; gap: 10px;">
-  <img src="image-1.png" alt="Sample Output 1" width="49%">
-  <img src="image-2.png" alt="Sample Output 2" width="49%">
+  <img src="images/image-1.png" alt="Sample Output 1" width="49%">
+  <img src="images/image-2.png" alt="Sample Output 2" width="49%">
 </div>
 
 <div style="display: flex; gap: 10px;">
-  <img src="image-3.png" alt="Sample Output 3" width="49%">
-  <img src="image-4.png" alt="Sample Output 4" width="49%">
+  <img src="images/image-3.png" alt="Sample Output 3" width="49%">
+  <img src="images/image-4.png" alt="Sample Output 4" width="49%">
 </div>
 
 <div style="display: flex; gap: 10px;">
-  <img src="image-5.png" alt="Sample Output 5" width="49%">
-  <img src="image-6.png" alt="Sample Output 6" width="49%">
+  <img src="images/image-5.png" alt="Sample Output 5" width="49%">
+  <img src="images/image-6.png" alt="Sample Output 6" width="49%">
 </div>
 
 
@@ -336,8 +336,6 @@ All installed in your virtual environment!
 ---
 
 
-## Failures
 
-![alt text](image-7.png)
 
-![alt text](image-8.png)
+** version 2 has improved the movie poster's 3d images output quality by a decent chunk but not at teh stage of perfection like 2d images
