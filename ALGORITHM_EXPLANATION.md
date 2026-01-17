@@ -7,18 +7,18 @@ This tool converts 2D images (particularly manga panels and anime characters) in
 ---
 ## sample outputs
 <div style="display: flex; gap: 10px;">
-  <img src="image-1.png" alt="Sample Output 1" width="49%">
-  <img src="image-2.png" alt="Sample Output 2" width="49%">
+  <img src="images/image-1.png" alt="Sample Output 1" width="49%">
+  <img src="images/image-2.png" alt="Sample Output 2" width="49%">
 </div>
 
 <div style="display: flex; gap: 10px;">
-  <img src="image-3.png" alt="Sample Output 3" width="49%">
-  <img src="image-4.png" alt="Sample Output 4" width="49%">
+  <img src="images/image-3.png" alt="Sample Output 3" width="49%">
+  <img src="images/image-4.png" alt="Sample Output 4" width="49%">
 </div>
 
 <div style="display: flex; gap: 10px;">
-  <img src="image-5.png" alt="Sample Output 5" width="49%">
-  <img src="image-6.png" alt="Sample Output 6" width="49%">
+  <img src="images/image-5.png" alt="Sample Output 5" width="49%">
+  <img src="images/image-6.png" alt="Sample Output 6" width="49%">
 </div>
 
 
@@ -1031,9 +1031,9 @@ Photo with bilateral + posterization: 800 contours (comparable to manga)
 
 ## Failures
 
-![alt text](image-7.png)
+![alt text](images/image-7.png)
 
-![alt text](image-8.png)
+![alt text](images/image-8.png)
 
 ---
 
