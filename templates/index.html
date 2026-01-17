@@ -80,14 +80,120 @@
                             </label>
                             <input type="number" id="min_contour_area" name="min_contour_area" value="20" step="1" min="1" max="100">
                         </div>
+                    </div>
 
-                        <div class="param-group">
-                            <label for="blur_size">Blur Size:
-                                <span class="tooltip">ℹ️
-                                    <span class="tooltiptext">Gaussian blur before edge detection. Lower = preserve details. Higher = smooth noise. Odd numbers only (1, 3, 5, 7).</span>
-                                </span>
+                    <div class="filter-section">
+                        <h3>Blur Filter Settings</h3>
+                        
+                        <div class="filter-toggle">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="use_bilateral" name="use_bilateral">
+                                <span>Use Bilateral Filter (edge-preserving)</span>
                             </label>
-                            <input type="number" id="blur_size" name="blur_size" value="3" step="2" min="1" max="9">
+                            <p class="help-text"> Bilateral filter smooths gradients while preserving edges - better for photos/posters</p>
+                        </div>
+                        
+                        <div id="bilateral-controls" class="filter-controls" style="display: none;">
+                            <div class="param-group">
+                                <label for="bilateral_d">Neighborhood Diameter:
+                                    <span class="tooltip">ℹ️
+                                        <span class="tooltiptext">Pixel neighborhood size. Larger = more blur but slower. Try 5-11.</span>
+                                    </span>
+                                </label>
+                                <input type="range" id="bilateral_d" name="bilateral_d" 
+                                       min="5" max="15" value="9" step="2">
+                                <span class="value-display" id="bilateral_d_value">9</span>
+                            </div>
+                            
+                            <div class="param-group">
+                                <label for="bilateral_sigma_color">Sigma Color (intensity tolerance):
+                                    <span class="tooltip">ℹ️
+                                        <span class="tooltiptext">How different pixel intensities can be. Higher = more aggressive smoothing. Try 50-100.</span>
+                                    </span>
+                                </label>
+                                <input type="range" id="bilateral_sigma_color" name="bilateral_sigma_color" 
+                                       min="10" max="200" value="75" step="5">
+                                <span class="value-display" id="bilateral_sigma_color_value">75</span>
+                            </div>
+                            
+                            <div class="param-group">
+                                <label for="bilateral_sigma_space">Sigma Space (spatial reach):
+                                    <span class="tooltip">ℹ️
+                                        <span class="tooltiptext">Spatial distance influence. Higher = blur over larger distances. Try 50-100.</span>
+                                    </span>
+                                </label>
+                                <input type="range" id="bilateral_sigma_space" name="bilateral_sigma_space" 
+                                       min="10" max="200" value="75" step="5">
+                                <span class="value-display" id="bilateral_sigma_space_value">75</span>
+                            </div>
+                        </div>
+                        
+                        <div id="gaussian-controls" class="filter-controls">
+                            <div class="param-group">
+                                <label for="blur_size">Gaussian Blur Size:
+                                    <span class="tooltip">ℹ️
+                                        <span class="tooltiptext">Gaussian blur before edge detection. Lower = preserve details. Higher = smooth noise. Odd numbers only (1, 3, 5, 7).</span>
+                                    </span>
+                                </label>
+                                <input type="number" id="blur_size" name="blur_size" value="3" step="2" min="1" max="9">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="preprocessing-section">
+                        <h3>Advanced Preprocessing</h3>
+                        
+                        <div class="preprocessing-option">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="use_posterize" name="use_posterize">
+                                <span>Use Posterization (reduce gradients)</span>
+                            </label>
+                            <p class="help-text"> Simplifies images by reducing color levels - great for photos/posters with gradients</p>
+                            
+                            <div id="posterize-controls" class="filter-controls" style="display: none;">
+                                <div class="param-group">
+                                    <label for="posterize_levels">Posterization Levels:
+                                        <span class="tooltip">ℹ️
+                                            <span class="tooltiptext">Number of gray levels (2-16). Lower = more aggressive simplification. Try 4-6 for posters.</span>
+                                        </span>
+                                    </label>
+                                    <input type="range" id="posterize_levels" name="posterize_levels" 
+                                           min="2" max="16" value="4" step="1">
+                                    <span class="value-display" id="posterize_levels_value">4</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="preprocessing-option">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="use_morphology" name="use_morphology">
+                                <span>Use Morphological Cleanup (clean edges)</span>
+                            </label>
+                            <p class="help-text"> Connects broken edges and removes noise - improves contour quality</p>
+                            
+                            <div id="morphology-controls" class="filter-controls" style="display: none;">
+                                <div class="param-group">
+                                    <label for="morph_close">Closing Kernel (connect edges):
+                                        <span class="tooltip">ℹ️
+                                            <span class="tooltiptext">Larger values connect more distant edges. Try 3-5.</span>
+                                        </span>
+                                    </label>
+                                    <input type="range" id="morph_close" name="morph_close" 
+                                           min="2" max="7" value="3" step="1">
+                                    <span class="value-display" id="morph_close_value">3</span>
+                                </div>
+                                
+                                <div class="param-group">
+                                    <label for="morph_open">Opening Kernel (remove noise):
+                                        <span class="tooltip">ℹ️
+                                            <span class="tooltiptext">Larger values remove bigger specks. Try 2-3.</span>
+                                        </span>
+                                    </label>
+                                    <input type="range" id="morph_open" name="morph_open" 
+                                           min="1" max="5" value="2" step="1">
+                                    <span class="value-display" id="morph_open_value">2</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -170,6 +276,57 @@
             }
         });
 
+        // Update value displays for range sliders
+        document.getElementById('bilateral_d').addEventListener('input', function() {
+            document.getElementById('bilateral_d_value').textContent = this.value;
+        });
+
+        document.getElementById('bilateral_sigma_color').addEventListener('input', function() {
+            document.getElementById('bilateral_sigma_color_value').textContent = this.value;
+        });
+
+        document.getElementById('bilateral_sigma_space').addEventListener('input', function() {
+            document.getElementById('bilateral_sigma_space_value').textContent = this.value;
+        });
+
+        document.getElementById('posterize_levels').addEventListener('input', function() {
+            document.getElementById('posterize_levels_value').textContent = this.value;
+        });
+
+        document.getElementById('morph_close').addEventListener('input', function() {
+            document.getElementById('morph_close_value').textContent = this.value;
+        });
+
+        document.getElementById('morph_open').addEventListener('input', function() {
+            document.getElementById('morph_open_value').textContent = this.value;
+        });
+
+        // Toggle bilateral/Gaussian controls
+        document.getElementById('use_bilateral').addEventListener('change', function() {
+            const bilateralControls = document.getElementById('bilateral-controls');
+            const gaussianControls = document.getElementById('gaussian-controls');
+            
+            if (this.checked) {
+                bilateralControls.style.display = 'block';
+                gaussianControls.style.display = 'none';
+            } else {
+                bilateralControls.style.display = 'none';
+                gaussianControls.style.display = 'block';
+            }
+        });
+
+        // Toggle posterization controls
+        document.getElementById('use_posterize').addEventListener('change', function() {
+            const posterizeControls = document.getElementById('posterize-controls');
+            posterizeControls.style.display = this.checked ? 'block' : 'none';
+        });
+
+        // Toggle morphology controls
+        document.getElementById('use_morphology').addEventListener('change', function() {
+            const morphologyControls = document.getElementById('morphology-controls');
+            morphologyControls.style.display = this.checked ? 'block' : 'none';
+        });
+
         // Drag and Drop functionality
         dropZone.addEventListener('dragover', function(e) {
             e.preventDefault();
@@ -224,6 +381,23 @@
             // Add contours_only flag based on mode selection
             const mode = document.querySelector('input[name="mode"]:checked').value;
             formData.append('contours_only', mode === 'preview' ? 'true' : 'false');
+            
+            // Remove checkbox values that FormData auto-adds as 'on', then add proper true/false values
+            formData.delete('use_bilateral');
+            formData.delete('use_posterize');
+            formData.delete('use_morphology');
+            
+            // Add bilateral filter checkbox value
+            const useBilateral = document.getElementById('use_bilateral').checked;
+            formData.append('use_bilateral', useBilateral ? 'true' : 'false');
+            
+            // Add posterization checkbox value
+            const usePosterize = document.getElementById('use_posterize').checked;
+            formData.append('use_posterize', usePosterize ? 'true' : 'false');
+            
+            // Add morphology checkbox value
+            const useMorphology = document.getElementById('use_morphology').checked;
+            formData.append('use_morphology', useMorphology ? 'true' : 'false');
 
             try {
                 if (mode === 'preview') {
@@ -249,7 +423,10 @@
 
                 // Display results
                 document.getElementById('statsMessage').textContent = data.message || 'Conversion complete!';
-                document.getElementById('outputImage').src = data.output_image;
+                
+                // Add timestamp to prevent browser caching
+                const timestamp = new Date().getTime();
+                document.getElementById('outputImage').src = data.output_image + '?t=' + timestamp;
                 document.getElementById('downloadImage').href = data.output_image;
                 
                 if (data.contours_only) {

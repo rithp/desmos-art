@@ -248,6 +248,135 @@ header p {
     font-style: italic;
 }
 
+/* Bilateral Filter Styles */
+.filter-section {
+    margin-top: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 2px solid #dee2e6;
+}
+
+.filter-section h3 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+    font-size: 1.1em;
+}
+
+.filter-toggle {
+    margin-bottom: 15px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 1em;
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+.checkbox-label input[type="checkbox"] {
+    margin-right: 10px;
+    transform: scale(1.3);
+    cursor: pointer;
+    accent-color: #2ecc71;
+}
+
+.checkbox-label span {
+    user-select: none;
+}
+
+.help-text {
+    font-size: 0.85em;
+    color: #7f8c8d;
+    margin: 5px 0 0 28px;
+    font-style: italic;
+}
+
+.filter-controls {
+    margin-top: 15px;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+#bilateral-controls {
+    background: #e8f5e9;
+    border-left: 4px solid #2ecc71;
+}
+
+/* Preprocessing Section Styles */
+.preprocessing-section {
+    margin-top: 30px;
+    padding: 20px;
+    background: #fff3e0;
+    border-radius: 10px;
+    border: 2px solid #ffb74d;
+}
+
+.preprocessing-section h3 {
+    margin-bottom: 15px;
+    color: #e65100;
+    font-size: 1.1em;
+}
+
+.preprocessing-option {
+    margin-bottom: 20px;
+}
+
+#posterize-controls {
+    background: #fff8e1;
+    border-left: 4px solid #ffa726;
+}
+
+#morphology-controls {
+    background: #e1f5fe;
+    border-left: 4px solid #29b6f6;
+}
+
+.value-display {
+    display: inline-block;
+    min-width: 40px;
+    padding: 4px 8px;
+    background: #667eea;
+    color: white;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.9em;
+    text-align: center;
+    margin-left: 10px;
+}
+
+input[type="range"] {
+    width: 100%;
+    margin: 10px 0;
+    cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #667eea;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+    background: #5568d3;
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #667eea;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+
 .convert-btn {
     width: 100%;
     padding: 18px;

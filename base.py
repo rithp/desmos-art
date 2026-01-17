@@ -49,6 +49,23 @@ class ImageToDesmosConverter:
         print(f"✓ Loaded {self.gray.shape[1]}×{self.gray.shape[0]} image")
         return self
     
+    def posterize(self, levels=4):
+        """
+        Reduce gray levels to simplify gradients and reduce noise.
+        
+        Parameters:
+        - levels: Number of distinct gray levels (2-16, default: 4)
+                 Lower = more aggressive simplification
+        """
+        if levels < 2 or levels > 16:
+            print(f"⚠️  Warning: levels should be between 2-16, got {levels}")
+            levels = max(2, min(16, levels))
+        
+        step = 256 // levels
+        self.gray = (self.gray // step) * step
+        print(f"✓ Posterized to {levels} gray levels (step={step})")
+        return self
+    
     def _rotate_image(self, img, angle):
         (h, w) = img.shape[:2]
         center = (w // 2, h // 2)
@@ -60,14 +77,66 @@ class ImageToDesmosConverter:
         return rotated
     
     def detect_edges(self, low_threshold=30, high_threshold=100, 
-                     blur_size=3, min_contour_area=20):
-        blurred = cv2.GaussianBlur(self.gray, (blur_size, blur_size), 0)
+                     blur_size=3, min_contour_area=20, use_bilateral=False,
+                     bilateral_d=9, bilateral_sigma_color=75, bilateral_sigma_space=75):
+        """
+        Detect edges using Canny edge detection.
+        
+        Parameters:
+        - use_bilateral: Use bilateral filter instead of Gaussian blur
+        - bilateral_d: Diameter of pixel neighborhood (default: 9)
+        - bilateral_sigma_color: Filter sigma in color space (default: 75)
+        - bilateral_sigma_space: Filter sigma in coordinate space (default: 75)
+        """
+        
+        if use_bilateral:
+            # Edge-preserving bilateral filter
+            blurred = cv2.bilateralFilter(
+                self.gray, 
+                d=bilateral_d,
+                sigmaColor=bilateral_sigma_color,
+                sigmaSpace=bilateral_sigma_space
+            )
+            print(f" Applied bilateral filter (d={bilateral_d}, σ_color={bilateral_sigma_color}, σ_space={bilateral_sigma_space})")
+        elif blur_size > 0:
+            # Standard Gaussian blur
+            blurred = cv2.GaussianBlur(self.gray, (blur_size, blur_size), 0)
+            print(f" Applied Gaussian blur (kernel={blur_size}x{blur_size})")
+        else:
+            blurred = self.gray
+            print(" No blur applied")
+        
         self.edges = cv2.Canny(blurred, low_threshold, high_threshold)
         
         contours, _ = cv2.findContours(self.edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
         self.contours = [c for c in contours if cv2.contourArea(c) > min_contour_area]
         
-        print(f"Found {len(self.contours)} contours")
+        print(f"✓ Found {len(self.contours)} contours (min_area={min_contour_area})")
+        return self
+    
+    def clean_edges(self, close_kernel=3, open_kernel=2):
+        """
+        Apply morphological operations to clean edge map.
+        
+        Parameters:
+        - close_kernel: Size of kernel for closing (connects nearby edges)
+        - open_kernel: Size of kernel for opening (removes small specks)
+        """
+        close_k = np.ones((close_kernel, close_kernel), np.uint8)
+        open_k = np.ones((open_kernel, open_kernel), np.uint8)
+        
+        # Close: connects broken edges
+        self.edges = cv2.morphologyEx(self.edges, cv2.MORPH_CLOSE, close_k)
+        
+        # Open: removes small noise
+        self.edges = cv2.morphologyEx(self.edges, cv2.MORPH_OPEN, open_k)
+        
+        # Re-find contours after cleanup
+        contours, _ = cv2.findContours(self.edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+        old_count = len(self.contours)
+        self.contours = [c for c in contours if cv2.contourArea(c) > 20]
+        
+        print(f"✓ Cleaned edges: {old_count} → {len(self.contours)} contours")
         return self
     
     def simplify_contours(self, epsilon_factor=0.0001):
@@ -529,15 +598,36 @@ class ImageToDesmosConverter:
     
     def process_preview_only(self, manual_rotation=0, low_threshold=30, 
                             high_threshold=100, epsilon_factor=0.0001,
-                            min_contour_area=20, blur_size=3):
+                            min_contour_area=20, blur_size=3, use_bilateral=False,
+                            bilateral_d=9, bilateral_sigma_color=75, bilateral_sigma_space=75,
+                            use_posterize=False, posterize_levels=4,
+                            use_morphology=False, morph_close=3, morph_open=2):
         """Process image and show only contours without computing Desmos equations."""
         print("\n" + "=" * 50)
         print("🔍 Preview Mode - Contours Only")
         print("=" * 50)
         
         self.load_and_preprocess(manual_rotation=manual_rotation)
-        self.detect_edges(low_threshold=low_threshold, high_threshold=high_threshold,
-                         blur_size=blur_size, min_contour_area=min_contour_area)
+        
+        # Apply posterization if requested
+        if use_posterize:
+            self.posterize(levels=posterize_levels)
+        
+        self.detect_edges(
+            low_threshold=low_threshold, 
+            high_threshold=high_threshold,
+            blur_size=blur_size, 
+            min_contour_area=min_contour_area,
+            use_bilateral=use_bilateral,
+            bilateral_d=bilateral_d,
+            bilateral_sigma_color=bilateral_sigma_color,
+            bilateral_sigma_space=bilateral_sigma_space
+        )
+        
+        # Apply morphological cleanup if requested
+        if use_morphology:
+            self.clean_edges(close_kernel=morph_close, open_kernel=morph_open)
+        
         self.simplify_contours(epsilon_factor=epsilon_factor)
         
         # Export contours visualization only

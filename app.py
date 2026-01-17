@@ -53,11 +53,54 @@ def convert_image():
         blur_size = int(request.form.get('blur_size', 3))
         contours_only = request.form.get('contours_only', 'false').lower() == 'true'
         
+        # Bilateral filter parameters
+        use_bilateral = request.form.get('use_bilateral', 'false').lower() == 'true'
+        bilateral_d = int(request.form.get('bilateral_d', 9))
+        bilateral_sigma_color = int(request.form.get('bilateral_sigma_color', 75))
+        bilateral_sigma_space = int(request.form.get('bilateral_sigma_space', 75))
+        
+        # NEW: Posterization parameters
+        use_posterize = request.form.get('use_posterize', 'false').lower() == 'true'
+        posterize_levels = int(request.form.get('posterize_levels', 4))
+        
+        # NEW: Morphology parameters
+        use_morphology = request.form.get('use_morphology', 'false').lower() == 'true'
+        morph_close = int(request.form.get('morph_close', 3))
+        morph_open = int(request.form.get('morph_open', 2))
+        
+        # DEBUG: Print what we received
+        print(f"\n{'='*60}")
+        print(f"PARAMETERS RECEIVED:")
+        print(f"  use_bilateral: {use_bilateral} (raw: '{request.form.get('use_bilateral', 'NOT SENT')}')")
+        print(f"  use_posterize: {use_posterize} (raw: '{request.form.get('use_posterize', 'NOT SENT')}')")
+        print(f"  posterize_levels: {posterize_levels}")
+        print(f"  use_morphology: {use_morphology} (raw: '{request.form.get('use_morphology', 'NOT SENT')}')")
+        print(f"  morph_close: {morph_close}, morph_open: {morph_open}")
+        print(f"{'='*60}\n")
+        
         # Process image
         converter = ImageToDesmosConverter(filepath)
         converter.load_and_preprocess(manual_rotation=manual_rotation)
-        converter.detect_edges(low_threshold=low_threshold, high_threshold=high_threshold,
-                              blur_size=blur_size, min_contour_area=min_contour_area)
+        
+        # Apply posterization if requested
+        if use_posterize:
+            converter.posterize(levels=posterize_levels)
+        
+        converter.detect_edges(
+            low_threshold=low_threshold, 
+            high_threshold=high_threshold,
+            blur_size=blur_size, 
+            min_contour_area=min_contour_area,
+            use_bilateral=use_bilateral,
+            bilateral_d=bilateral_d,
+            bilateral_sigma_color=bilateral_sigma_color,
+            bilateral_sigma_space=bilateral_sigma_space
+        )
+        
+        # Apply morphological cleanup if requested
+        if use_morphology:
+            converter.clean_edges(close_kernel=morph_close, open_kernel=morph_open)
+        
         converter.simplify_contours(epsilon_factor=epsilon_factor)
         
         # Generate output files - just pass filenames, base.py handles the output_dir
