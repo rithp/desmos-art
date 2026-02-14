@@ -44,7 +44,7 @@ class ImageToDesmosConverter:
         if manual_rotation != 0:
             self.gray = self._rotate_image(self.gray, manual_rotation)
             self.image = self._rotate_image(self.image, manual_rotation)
-            print(f"✓ Rotated {manual_rotation:.1f}°")
+            print(f" Rotated {manual_rotation:.1f}°")
         
         print(f"✓ Loaded {self.gray.shape[1]}×{self.gray.shape[0]} image")
         return self
@@ -58,7 +58,7 @@ class ImageToDesmosConverter:
                  Lower = more aggressive simplification
         """
         if levels < 2 or levels > 16:
-            print(f"⚠️  Warning: levels should be between 2-16, got {levels}")
+            print(f" Warning: levels should be between 2-16, got {levels}")
             levels = max(2, min(16, levels))
         
         step = 256 // levels
