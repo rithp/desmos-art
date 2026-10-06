@@ -216,6 +216,83 @@
             </form>
         </div>
 
+        <div class="upload-section video-section">
+            <h2>🎬 Video to Desmos</h2>
+            <p class="params-description">Converts every sampled frame into one Desmos expression and builds a player page that animates them in Desmos. No copy-pasting. Edge-detection and filter settings above are reused.</p>
+            <form id="videoForm" enctype="multipart/form-data">
+                <div class="file-input-wrapper">
+                    <input type="file" id="videoInput" name="video" accept="video/*" required>
+                    <label for="videoInput" class="file-label">
+                        <span id="videoFileName">Click to choose a video (MP4, MOV, WEBM...)</span>
+                    </label>
+                </div>
+                <div class="param-grid">
+                    <div class="param-group">
+                        <label for="video_fps">Frames per second:</label>
+                        <input type="number" id="video_fps" name="fps" value="12" min="1" max="60">
+                    </div>
+                    <div class="param-group">
+                        <label for="video_width">Frame width (px):</label>
+                        <input type="number" id="video_width" name="width" value="480" min="100" max="1920" step="10">
+                    </div>
+                    <div class="param-group">
+                        <label for="video_max_segments">Max curves per frame:
+                            <span class="tooltip">ℹ️
+                                <span class="tooltiptext">Lower = simpler frames that Desmos renders faster. 300-800 works well.</span>
+                            </span>
+                        </label>
+                        <input type="number" id="video_max_segments" name="max_segments" value="600" min="50" max="10000" step="50">
+                    </div>
+                    <div class="param-group">
+                        <label for="video_max_frames">Max frames (blank = whole video):</label>
+                        <input type="number" id="video_max_frames" name="max_frames" min="1">
+                    </div>
+                    <div class="param-group">
+                        <label for="video_start">Start (seconds):</label>
+                        <input type="number" id="video_start" name="start" value="0" min="0" step="0.1">
+                    </div>
+                    <div class="param-group">
+                        <label for="video_end">End (seconds, blank = full):</label>
+                        <input type="number" id="video_end" name="end" min="0" step="0.1">
+                    </div>
+                </div>
+                <div class="filter-toggle">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="video_color">
+                        <span>Colour (each curve takes the video's colour; unticked = black and white)</span>
+                    </label>
+                </div>
+                <button type="submit" class="convert-btn">Convert Video</button>
+            </form>
+
+            <div id="videoResults" class="results-section hidden">
+                <p id="videoMessage" class="success-message"></p>
+                <a id="videoPlayer" href="" target="_blank" class="download-btn">▶ Open Desmos Player</a>
+                <a id="videoConsole" href="" class="download-btn">Download Console Script</a>
+                <a id="videoFrames" href="" class="download-btn">Download frames.json</a>
+                <a id="videoPreview" href="" class="download-btn">Download Preview (mp4)</a>
+                <p class="instructions">The player runs Desmos right in the page. Alternatively, paste the console script <b>once</b> into the browser console on <a href="https://www.desmos.com/calculator" target="_blank">desmos.com/calculator</a> and it plays there (<code>dv.pause()</code>, <code>dv.play()</code>, <code>dv.go(n)</code>, <code>dv.fps(n)</code>, <code>dv.mode('poly')</code>, <code>dv.record(2)</code>). Pause to see every curve as a polynomial equation. To screen-record with the equations visible, use <b>Record mode</b> in the player and speed the recording up by the factor it shows.</p>
+
+                <div class="render-box">
+                    <h3>🎞️ Render Video (graph + equations)</h3>
+                    <p class="help-text">Draws every frame in Desmos with the polynomial equations panel, then stitches the frames into an mp4 at the video's real speed, with the original audio. No screen recording needed. Takes roughly 0.5–1 s per frame. Needs Google Chrome, ffmpeg and Playwright on the machine running this app.</p>
+                    <div class="render-options">
+                        <label>Size
+                            <select id="renderSize">
+                                <option value="1920x1080">1920 × 1080</option>
+                                <option value="1280x720">1280 × 720 (faster)</option>
+                            </select>
+                        </label>
+                        <label class="checkbox-label"><input type="checkbox" id="renderAudio" checked> <span>Include audio</span></label>
+                        <button type="button" id="renderBtn" class="download-btn">Render Video</button>
+                    </div>
+                    <p id="renderStatus" class="help-text"></p>
+                    <video id="renderVideo" class="hidden" controls></video>
+                    <a id="renderDownload" href="" class="download-btn hidden">Download Rendered Video</a>
+                </div>
+            </div>
+        </div>
+
         <div id="results" class="results-section hidden">
             <h2>✅ <span id="resultsTitle">Conversion Complete!</span></h2>
             <p id="statsMessage" class="success-message"></p>
@@ -415,7 +492,7 @@
                     document.getElementById('loadingStatus').textContent = 'Generating polynomial equations...';
                 }
 
-                const data = await response.json();
+                const data = await readJson(response);
 
                 if (data.error) {
                     throw new Error(data.error);
@@ -457,6 +534,130 @@
                 document.getElementById('loading').classList.add('hidden');
                 error.textContent = 'Error: ' + err.message;
                 error.classList.remove('hidden');
+            }
+        });
+
+        // Parse a JSON reply; if the server sent an HTML error page instead, report its status
+        async function readJson(response) {
+            const text = await response.text();
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                throw new Error(`Server error ${response.status} ${response.statusText}`.trim() +
+                                ' (check the terminal running app.py for details)');
+            }
+        }
+
+        // Video conversion
+        const videoForm = document.getElementById('videoForm');
+        const videoInput = document.getElementById('videoInput');
+
+        videoInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                document.getElementById('videoFileName').textContent = e.target.files[0].name;
+            }
+        });
+
+        videoForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('loadingStatus').textContent = 'Converting frames (this can take a minute)...';
+            document.getElementById('videoResults').classList.add('hidden');
+            error.classList.add('hidden');
+
+            const formData = new FormData(videoForm);
+            formData.append('color', document.getElementById('video_color').checked ? 'true' : 'false');
+            // Reuse the edge-detection / filter settings from the image form
+            ['low_threshold', 'high_threshold', 'blur_size', 'bilateral_d', 'bilateral_sigma_color',
+             'bilateral_sigma_space', 'posterize_levels', 'morph_close', 'morph_open'].forEach(id => {
+                formData.append(id, document.getElementById(id).value);
+            });
+            ['use_bilateral', 'use_posterize', 'use_morphology'].forEach(id => {
+                formData.append(id, document.getElementById(id).checked ? 'true' : 'false');
+            });
+
+            try {
+                const response = await fetch('/convert-video', { method: 'POST', body: formData });
+                const data = await readJson(response);
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                document.getElementById('videoMessage').textContent = data.message;
+                document.getElementById('videoPlayer').href = data.player;
+                document.getElementById('videoConsole').href = data.console_file;
+                document.getElementById('videoFrames').href = data.frames_file;
+                document.getElementById('videoPreview').href = data.preview_file;
+                currentFolder = data.folder;
+                resetRender();
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('videoResults').classList.remove('hidden');
+            } catch (err) {
+                document.getElementById('loading').classList.add('hidden');
+                error.textContent = 'Error: ' + err.message;
+                error.classList.remove('hidden');
+                error.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+
+        // Rendering runs on the server in the background; poll its progress
+        let currentFolder = null, renderPoll = null;
+        const renderBtn = document.getElementById('renderBtn');
+        const renderStatus = document.getElementById('renderStatus');
+        const renderVideo = document.getElementById('renderVideo');
+        const renderDownload = document.getElementById('renderDownload');
+
+        function resetRender() {
+            clearInterval(renderPoll);
+            renderBtn.disabled = false;
+            renderStatus.textContent = '';
+            renderVideo.classList.add('hidden');
+            renderVideo.removeAttribute('src');
+            renderDownload.classList.add('hidden');
+        }
+
+        function showRenderJob(job) {
+            if (job.state === 'running') {
+                renderStatus.textContent = !job.total ? 'Starting Chrome...'
+                    : job.done < job.total
+                        ? `Rendering frame ${job.done} / ${job.total} (~${Math.ceil(job.eta / 60)} min left)`
+                        : 'Encoding video...';
+                return;
+            }
+            clearInterval(renderPoll);
+            renderBtn.disabled = false;
+            if (job.state === 'done') {
+                renderStatus.textContent = 'Done!';
+                renderVideo.src = job.file + '?t=' + Date.now();
+                renderVideo.classList.remove('hidden');
+                renderDownload.href = job.file + '?download=1';
+                renderDownload.classList.remove('hidden');
+            } else {
+                renderStatus.textContent = 'Render failed: ' + job.error;
+            }
+        }
+
+        renderBtn.addEventListener('click', async function() {
+            if (!currentFolder) return;
+            resetRender();
+            renderBtn.disabled = true;
+            renderStatus.textContent = 'Starting...';
+            const formData = new FormData();
+            formData.append('size', document.getElementById('renderSize').value);
+            formData.append('audio', document.getElementById('renderAudio').checked ? 'true' : 'false');
+            try {
+                const response = await fetch('/render-video/' + currentFolder, { method: 'POST', body: formData });
+                const job = await readJson(response);
+                if (job.error) throw new Error(job.error);
+                showRenderJob(job);
+                renderPoll = setInterval(async () => {
+                    try {
+                        const r = await fetch('/render-status/' + currentFolder);
+                        showRenderJob(await r.json());
+                    } catch (e) { /* keep polling through brief network hiccups */ }
+                }, 1500);
+            } catch (err) {
+                renderBtn.disabled = false;
+                renderStatus.textContent = 'Render failed: ' + err.message;
             }
         });
 

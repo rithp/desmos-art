@@ -606,3 +606,60 @@ input[type="range"]::-moz-range-thumb {
         border-radius: 0;
     }
 }
+
+.video-section {
+    border-top: 2px solid #e9ecef;
+}
+
+.video-section h2 {
+    color: #495057;
+    margin-bottom: 10px;
+}
+
+#videoResults {
+    margin-top: 30px;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.render-box {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #dee2e6;
+}
+
+.render-box h3 {
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+.render-options {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    margin: 12px 0;
+}
+
+.render-options select {
+    margin-left: 6px;
+    padding: 6px;
+}
+
+.render-options .download-btn {
+    border: none;
+    cursor: pointer;
+}
+
+.render-options .download-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+#renderVideo {
+    display: block;
+    width: 100%;
+    max-width: 800px;
+    margin: 12px 0;
+    border-radius: 12px;
+}

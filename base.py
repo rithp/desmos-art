@@ -48,7 +48,16 @@ class ImageToDesmosConverter:
         
         print(f"✓ Loaded {self.gray.shape[1]}×{self.gray.shape[0]} image")
         return self
-    
+
+    def load_from_array(self, image, enhance_contrast=True):
+        """Load a BGR image already in memory (e.g. a video frame) without writing to disk."""
+        self.image = image
+        self.gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        if enhance_contrast:
+            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+            self.gray = clahe.apply(self.gray)
+        return self
+
     def posterize(self, levels=4):
         """
         Reduce gray levels to simplify gradients and reduce noise.

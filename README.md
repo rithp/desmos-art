@@ -132,6 +132,51 @@ Version 2.0 introduces advanced preprocessing features specifically designed for
 For mathematical formulations and detailed explanations of these algorithms, see the updated [ALGORITHM_EXPLANATION.md](ALGORITHM_EXPLANATION.md).
 
 
+## Video to Desmos (frame-by-frame)
+
+Turn a video into frame-by-frame Desmos equations and play it back in Desmos, with no copy-pasting per frame.
+
+```bash
+python video.py clip.mp4
+python video.py clip.mp4 --fps 10 --width 400 --max-segments 300 --start 2 --end 8
+python video.py clip.mp4 --color      # colour each curve from the video (default is black and white)
+```
+
+Or use the **Video to Desmos** section of the web app (`python app.py`), which reuses the edge and filter settings from the image form.
+
+Output goes to `outputs/<video name>_video/`:
+
+| File | What it is |
+|---|---|
+| `player.html` | Open it in a browser. It embeds Desmos (with grid lines) and plays every frame, with play/pause, scrub, fps and arrow keys. **No copy-paste needed.** Pause or step to see each curve as its own polynomial `(x(t), y(t))`. |
+| `desmos_console.js` | Paste it **once** into the browser console on desmos.com/calculator to play the video there. Control it with `dv.pause()`, `dv.play()`, `dv.go(n)`, `dv.fps(n)`, `dv.mode('auto' \| 'poly' \| 'compact')`, `dv.color(true/false)`, `dv.record(2)` and `dv.stop()`. |
+| `frames.json` | Polynomial coefficients for every curve in every frame (highest power first), plus fps and size |
+| `preview.mp4` | A quick render of the fitted curves for checking quality without Desmos (skip it with `--no-preview`) |
+
+**How frames stay light enough for Desmos:**
+- Each curve is a polynomial pair such as `(21.33t^4 - 53.33t^3 + 46.67t^2 - 16.67t + 300, ...)` with `0 ≤ t ≤ 1`. Setting ~600 separate equations takes about half a second per frame. So the default **auto** view plays each frame as a *single* expression with list coefficients, e.g. `([a1,a2,...]t^4 + ..., [b1,b2,...]t^4 + ...)` (Desmos draws one curve per list entry), and switches to one polynomial equation per curve whenever you pause or step. You can also pick "always polynomials" (slow) or "always compact" in the player.
+- `--max-segments` (default 600) caps the curves per frame. Contours are resampled at an even spacing, which grows automatically from `--spacing` up to `--max-spacing` so the whole frame fits the budget. If the frame still doesn't fit, the shortest contours are dropped.
+- Contours are filtered by length (`--min-length`) rather than area, so open strokes in line art are kept.
+
+**Colour:** with `--color`, each curve takes the colour of the video along it: the least-white pixel near the curve, so ink lines stay dark and filled shapes keep their colour. Very light colours are darkened slightly so they show on the white grid. If you converted with colour, you can still switch it off in the player.
+
+**Rendering to a video file (graph + equations, no screen recording):**
+
+```bash
+pip install playwright                      # one-time; uses your installed Google Chrome
+python video.py clip.mp4 --render           # convert and render in one go
+python render.py outputs/clip_video         # or render an already converted folder
+python render.py outputs/clip_video --size 1280x720 --workers 6 --view compact --no-audio
+```
+
+In the web app, convert a video and then click **Render Video** under the results. Pick the size and whether to include audio, and the page shows progress, then plays the finished mp4 with a download link. Rendering runs on the machine hosting the app, so that machine needs Chrome, ffmpeg and Playwright (fine locally; most free hosting tiers don't have Chrome).
+
+This opens the player in a hidden Chrome window and, for every frame, shows each curve as a polynomial equation. It waits until Desmos has fully drawn the frame, then screenshots the graph together with the equations panel. ffmpeg stitches the screenshots into `desmos_render.mp4` at the video's real fps, with the original audio trimmed to match. No speeding up or syncing by hand is needed. Expect roughly 0.5–1 s per frame with 4 workers (more `--workers` = faster on more cores). Needs ffmpeg (`brew install ffmpeg`).
+
+**Screen recording with the equations visible:** click **Record mode** in the player (or run `dv.record(2)` on desmos.com). After a 3 s countdown it shows every frame as polynomial equations on a fixed schedule, one frame every *N* seconds, so each frame gets exactly the same screen time. Speed the recording up by *N × fps* (e.g. 2 s/frame at 12 fps → 24×) and the motion comes out correct. Normal playback is not suitable for this: in polynomial view each frame takes a variable ~1–1.5 s to rebuild, so frame timing would be uneven. If a frame takes longer than *N* seconds, you get a warning to raise *N*.
+
+**Tips:** lower `--max-segments` / `--fps` / `--width` if playback stutters. For real footage, try `--bilateral --posterize 4 --morphology`. Run `python video.py -h` for all options.
+
 ## sample outputs
 <div style="display: flex; gap: 10px;">
   <img src="images/image-1.png" alt="Sample Output 1" width="49%">
